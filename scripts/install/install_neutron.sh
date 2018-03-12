@@ -91,7 +91,7 @@ EOF
 
 	## [keystone_authtoken] section
 	ops_edit $neutron_ctl keystone_authtoken auth_uri http://$CTL_MGNT_IP:5000
-	ops_edit $neutron_ctl keystone_authtoken auth_url http://$CTL_MGNT_IP:35357
+	ops_edit $neutron_ctl keystone_authtoken auth_url http://$CTL_MGNT_IP:5000
 	ops_edit $neutron_ctl keystone_authtoken memcached_servers $CTL_MGNT_IP:11211
 	ops_edit $neutron_ctl keystone_authtoken auth_type password
 	ops_edit $neutron_ctl keystone_authtoken project_domain_name default
@@ -107,7 +107,7 @@ EOF
 	# ops_edit $neutron_ctl oslo_messaging_rabbit rabbit_password $RABBIT_PASS
 
 	## [nova] section
-	ops_edit $neutron_ctl nova auth_url http://$CTL_MGNT_IP:35357
+	ops_edit $neutron_ctl nova auth_url http://$CTL_MGNT_IP:5000
 	ops_edit $neutron_ctl nova auth_type password
 	ops_edit $neutron_ctl nova project_domain_name default
 	ops_edit $neutron_ctl nova user_domain_name default
@@ -242,7 +242,7 @@ elif [ "$1" == "compute1" ]; then
 
 	## [keystone_authtoken] section
 	ops_edit $neutron_com  keystone_authtoken auth_uri http://$CTL_MGNT_IP:5000
-	ops_edit $neutron_com  keystone_authtoken auth_url http://$CTL_MGNT_IP:35357
+	ops_edit $neutron_com  keystone_authtoken auth_url http://$CTL_MGNT_IP:5000
 	ops_edit $neutron_com  keystone_authtoken memcached_servers $CTL_MGNT_IP:11211
 	ops_edit $neutron_com  keystone_authtoken auth_type password
 	ops_edit $neutron_com  keystone_authtoken project_domain_name default
@@ -290,7 +290,7 @@ elif [ "$1" == "compute2" ]; then
 
 	## [keystone_authtoken] section
 	ops_edit $neutron_com  keystone_authtoken auth_uri http://$CTL_MGNT_IP:5000
-	ops_edit $neutron_com  keystone_authtoken auth_url http://$CTL_MGNT_IP:35357
+	ops_edit $neutron_com  keystone_authtoken auth_url http://$CTL_MGNT_IP:5000
 	ops_edit $neutron_com  keystone_authtoken memcached_servers $CTL_MGNT_IP:11211
 	ops_edit $neutron_com  keystone_authtoken auth_type password
 	ops_edit $neutron_com  keystone_authtoken project_domain_name default

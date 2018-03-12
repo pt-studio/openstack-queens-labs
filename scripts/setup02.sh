@@ -72,7 +72,7 @@ function install_database ()
 	echo mariadb-server-10.0 mysql-server/root_password_again $MYSQL_PASS | \
 	    debconf-set-selections
 
-	apt-get install -y  mariadb-server
+	apt-get -y install mariadb-server python-pymysql
 
 	sed -r -i 's/127\.0\.0\.1/0\.0\.0\.0/' $path_db_50server
 	sed -i 's/character-set-server  = utf8mb4/character-set-server  = utf8/' \
@@ -104,25 +104,27 @@ EOF
 ###############################################################################
 function install_rabbitmq {
 	echocolor "Install and Config RabbitMQ"
-	sleep 3
-
 	apt-get -y install rabbitmq-server
+
+	nc -nz localhost 5672
+
 	rabbitmqctl add_user openstack $RABBIT_PASS
 	rabbitmqctl set_permissions openstack ".*" ".*" ".*"
-	# rabbitmqctl change_password guest $RABBIT_PASS
-	sleep 3
 
 	service rabbitmq-server restart
 	echocolor "Finish setup pre-install package !!!"
+	sleep 3
 }
 
 ###############################################################################
 function install_memcache {
 	echocolor "Install and Config Memcache"
-	sleep 3
+
 	apt-get -y install memcached python-memcache
 	sed -i "s/-l 127.0.0.1/-l $CTL_MGNT_IP/g" /etc/memcached.conf
+
 	service memcached restart
+	systemctl enable memcached.service
 
 	echocolor "Done, you can run next script"
 }

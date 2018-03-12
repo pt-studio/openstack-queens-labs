@@ -118,7 +118,7 @@ fi
 
 ## [keystone_authtoken] section
 ops_edit $nova_ctl keystone_authtoken auth_uri http://$CTL_MGNT_IP:5000
-ops_edit $nova_ctl keystone_authtoken auth_url http://$CTL_MGNT_IP:35357
+ops_edit $nova_ctl keystone_authtoken auth_url http://$CTL_MGNT_IP:5000
 ops_edit $nova_ctl keystone_authtoken memcached_servers $CTL_MGNT_IP:11211
 ops_edit $nova_ctl keystone_authtoken auth_type password
 ops_edit $nova_ctl keystone_authtoken project_domain_name default
@@ -150,7 +150,7 @@ ops_edit $nova_ctl oslo_concurrency lock_path /var/lib/nova/tmp
 
 ## [neutron] section
 ops_edit $nova_ctl neutron url http://$CTL_MGNT_IP:9696
-ops_edit $nova_ctl neutron auth_url http://$CTL_MGNT_IP:35357
+ops_edit $nova_ctl neutron auth_url http://$CTL_MGNT_IP:5000
 ops_edit $nova_ctl neutron auth_type password
 ops_edit $nova_ctl neutron project_domain_name default
 ops_edit $nova_ctl neutron user_domain_name default

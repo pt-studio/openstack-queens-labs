@@ -60,7 +60,7 @@ ops_del $glanceapi_ctl database sqlite_db
 ops_edit $glanceapi_ctl keystone_authtoken \
     auth_uri http://$CTL_MGNT_IP:5000
 ops_edit $glanceapi_ctl keystone_authtoken \
-    auth_url http://$CTL_MGNT_IP:35357
+    auth_url http://$CTL_MGNT_IP:5000
 ops_edit $glanceapi_ctl keystone_authtoken \
     memcached_servers $CTL_MGNT_IP:11211
 ops_edit $glanceapi_ctl keystone_authtoken auth_type password
@@ -97,7 +97,7 @@ ops_del $glancereg_ctl database sqlite_db
 ops_edit $glancereg_ctl keystone_authtoken \
     auth_uri http://$CTL_MGNT_IP:5000
 ops_edit $glancereg_ctl keystone_authtoken \
-    auth_url http://$CTL_MGNT_IP:35357
+    auth_url http://$CTL_MGNT_IP:5000
 ops_edit $glancereg_ctl keystone_authtoken \
     memcached_servers $CTL_MGNT_IP:11211
 ops_edit $glancereg_ctl keystone_authtoken auth_type password

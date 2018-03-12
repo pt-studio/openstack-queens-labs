@@ -180,12 +180,14 @@ function setup_hosts {
 
 function repo_openstack {
     echocolor "Enable the OpenStack Queens repository"
-    sleep 3
-    apt install software-properties-common -y
+    apt-get install software-properties-common -y
     add-apt-repository cloud-archive:queens -y
+
     echocolor "Upgrade the packages for server"
+    apt-get -y update
+    apt-get -y upgrade
+    apt-get -y dist-upgrade
     sleep 3
-    apt-get -y update && apt-get -y upgrade && apt-get -y dist-upgrade
 }
 
 ###############################################################################
