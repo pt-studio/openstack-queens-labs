@@ -164,7 +164,7 @@ if [ "$1" == "controller" ]; then
     su -s /bin/sh -c "nova-manage db sync" nova
 
     echocolor "Testing NOVA service"
-    openstack compute service list
+    #openstack compute service list
     nova-manage cell_v2 list_cells
 
     service nova-api restart
