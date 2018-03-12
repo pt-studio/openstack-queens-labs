@@ -10,6 +10,7 @@ source $dir_path/../lib/functions.sh
 echocolor "Create Database for Keystone"
 
 cat << EOF | mysql -uroot -p$MYSQL_PASS
+DROP DATABASE IF EXISTS keystone;
 CREATE DATABASE keystone default character set utf8;
 GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY '$KEYSTONE_DBPASS' WITH GRANT OPTION;
 GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' IDENTIFIED BY '$KEYSTONE_DBPASS' WITH GRANT OPTION;
