@@ -122,7 +122,7 @@ EOF
     else
         echocolor "Cau hinh network that bai"
         exit 1
-    fi        
+    fi
 }
 
 function setup_hostname {
@@ -178,7 +178,7 @@ function setup_hosts {
     
 }
 
-function repo_openstack {
+function add_openstack_repo {
     echocolor "Enable the OpenStack Queens repository"
     apt-get install software-properties-common -y
     add-apt-repository cloud-archive:queens -y
@@ -206,7 +206,7 @@ fi
 setup_ip_add $1
 setup_hostname $1
 setup_hosts $1
-repo_openstack
+add_openstack_repo
 
 echocolor "Reboot Server"
 sleep 3

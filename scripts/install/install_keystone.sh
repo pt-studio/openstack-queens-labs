@@ -19,9 +19,7 @@ EOF
 
 echocolor "Install keystone"
 
-# echo "manual" > /etc/init/keystone.override
-
-apt-get -y install keystone --allow-unauthenticated
+apt-get -y install keystone
 
 # Back-up file keystone.conf
 path_keystone=/etc/keystone/keystone.conf
@@ -42,8 +40,6 @@ keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
 keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
 
 echocolor "Bootstrap the Identity service"
-sleep 3
-
 keystone-manage bootstrap --bootstrap-password $ADMIN_PASS \
   --bootstrap-admin-url http://$CTL_MGNT_IP:5000/v3/ \
   --bootstrap-internal-url http://$CTL_MGNT_IP:5000/v3/ \
@@ -51,7 +47,6 @@ keystone-manage bootstrap --bootstrap-password $ADMIN_PASS \
   --bootstrap-region-id RegionOne
   
 echocolor "Configure the Apache HTTP server"
-sleep 3
 echo "ServerName $CTL_MGNT_IP" >>  /etc/apache2/apache2.conf
 
 systemctl restart apache2
@@ -87,7 +82,6 @@ export OS_IDENTITY_API_VERSION=3
 export OS_IMAGE_API_VERSION=2
 EOF
 
-sleep 5
 echocolor "Execute environment script"
 chmod +x admin-openrc
 cat  admin-openrc >> /etc/profile
@@ -106,7 +100,7 @@ export OS_IDENTITY_API_VERSION=3
 export OS_IMAGE_API_VERSION=2
 EOF
 chmod +x demo-openrc
-cp  demo-openrc /root/demo-openrc
+cp demo-openrc /root/demo-openrc
 
 echocolor "Verifying keystone"
 openstack token issue
