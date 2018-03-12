@@ -19,23 +19,17 @@ EOF
 
 echocolor "Install keystone"
 
-apt-get -y install keystone
+apt-get install -y keystone apache2 libapache2-mod-wsgi
 
-# Back-up file keystone.conf
 path_keystone=/etc/keystone/keystone.conf
-log_keystone=/var/log/keystone
-test -f $path_keystone.orig || cp $path_keystone $path_keystone.orig
 
-# Config file /etc/keystone/keystone.conf
-# ops_edit $path_keystone DEFAULT admin_token $TOKEN_PASS
-
+# In the [database] section, configure database access
 ops_edit $path_keystone database connection mysql+pymysql://keystone:$KEYSTONE_DBPASS@$CTL_MGNT_IP/keystone
-
+# In the [token] section, configure the Fernet token provider
 ops_edit $path_keystone token provider fernet
-
-#
+# Populate the Identity service database
 su -s /bin/sh -c "keystone-manage db_sync" keystone
-
+# Initialize Fernet key repositories
 keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
 keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
 
@@ -47,10 +41,12 @@ keystone-manage bootstrap --bootstrap-password $ADMIN_PASS \
   --bootstrap-region-id RegionOne
   
 echocolor "Configure the Apache HTTP server"
-echo "ServerName $CTL_MGNT_IP" >>  /etc/apache2/apache2.conf
+cat /etc/apache2/apache2.conf | grep ServerName || echo "ServerName $CTL_MGNT_IP" >>  /etc/apache2/apache2.conf
 
 systemctl restart apache2
 rm -f /var/lib/keystone/keystone.db
+
+echocolor "Create a domain, projects, users, and roles"
 
 export OS_USERNAME=admin
 export OS_PASSWORD=$ADMIN_PASS
@@ -60,20 +56,38 @@ export OS_PROJECT_DOMAIN_NAME=Default
 export OS_AUTH_URL=http://$CTL_MGNT_IP:5000/v3
 export OS_IDENTITY_API_VERSION=3
 
-openstack project create --domain default --description "Service Project" service
+#openstack domain create --description "An Example Domain" example
 
-openstack project create --domain default --description "Demo Project" demo
-openstack user create demo --domain default --password $ADMIN_PASS
+# Create the service project
+openstack project create --domain default \
+  --description "Service Project" service
+
+# Create the demo project
+openstack project create --domain default \
+  --description "Demo Project" demo
+
+# Create the demo user
+openstack user create --domain default \
+  --password-prompt $ADMIN_PASS
+# Create the user role
 openstack role create user
+# Add the user role to the demo project and user
 openstack role add --project demo --user demo user
 
+unset OS_AUTH_URL OS_PASSWORD
 
-unset OS_TOKEN OS_URL
+openstack --os-auth-url http://$CTL_MGNT_IP:5000/v3 \
+  --os-project-domain-name Default --os-user-domain-name Default \
+  --os-project-name admin --os-username admin token issue
+
+openstack --os-auth-url http://$CTL_MGNT_IP:5000/v3 \
+  --os-project-domain-name Default --os-user-domain-name Default \
+  --os-project-name demo --os-username demo token issue
 
 # Create environment file
 cat << EOF > admin-openrc
-export OS_PROJECT_DOMAIN_NAME=default
-export OS_USER_DOMAIN_NAME=default
+export OS_PROJECT_DOMAIN_NAME=Default
+export OS_USER_DOMAIN_NAME=Default
 export OS_PROJECT_NAME=admin
 export OS_USERNAME=admin
 export OS_PASSWORD=$ADMIN_PASS
@@ -82,16 +96,19 @@ export OS_IDENTITY_API_VERSION=3
 export OS_IMAGE_API_VERSION=2
 EOF
 
+echocolor "Verifying keystone"
 echocolor "Execute environment script"
 chmod +x admin-openrc
-cat  admin-openrc >> /etc/profile
-cp  admin-openrc /root/admin-openrc
+
+cat admin-openrc >> /etc/profile
+cp admin-openrc /root/admin-openrc
 source admin-openrc
+openstack token issue
 
 
 cat << EOF > demo-openrc
-export OS_PROJECT_DOMAIN_NAME=default
-export OS_USER_DOMAIN_NAME=default
+export OS_PROJECT_DOMAIN_NAME=Default
+export OS_USER_DOMAIN_NAME=Default
 export OS_PROJECT_NAME=demo
 export OS_USERNAME=demo
 export OS_PASSWORD=$DEMO_PASS
@@ -102,6 +119,5 @@ EOF
 chmod +x demo-openrc
 cp demo-openrc /root/demo-openrc
 
-echocolor "Verifying keystone"
 openstack token issue
 
