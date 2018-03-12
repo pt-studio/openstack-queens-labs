@@ -21,6 +21,8 @@ echocolor "Install keystone"
 
 apt-get install -y keystone apache2 libapache2-mod-wsgi
 
+echocolor "Configure keystone"
+
 path_keystone=/etc/keystone/keystone.conf
 
 # In the [database] section, configure database access
@@ -34,6 +36,7 @@ keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
 keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
 
 echocolor "Bootstrap the Identity service"
+nc -nz $CTL_MGNT_IP 5000
 keystone-manage bootstrap --bootstrap-password $ADMIN_PASS \
   --bootstrap-admin-url http://$CTL_MGNT_IP:5000/v3/ \
   --bootstrap-internal-url http://$CTL_MGNT_IP:5000/v3/ \
