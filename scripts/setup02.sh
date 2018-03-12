@@ -106,7 +106,7 @@ function install_rabbitmq {
 	echocolor "Install and Config RabbitMQ"
 	apt-get -y install rabbitmq-server
 
-	nc -nz localhost 5672
+	nc -nz 127.0.0.1 5672
 
 	rabbitmqctl add_user openstack $RABBIT_PASS
 	rabbitmqctl set_permissions openstack ".*" ".*" ".*"

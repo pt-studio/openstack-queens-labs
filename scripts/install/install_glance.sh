@@ -1,5 +1,5 @@
 #!/bin/bash
-## Install GLANCE
+## Install GLANCE | Image service
 
 ###############################################################################
 ## Init enviroiment source
@@ -16,13 +16,14 @@ echocolor "Create the database for GLANCE"
 sleep 3
 
 cat << EOF | mysql -uroot -p$MYSQL_PASS
+DROP DATABASE IF EXISTS glance;
 CREATE DATABASE glance;
 GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'localhost' IDENTIFIED BY '$GLANCE_DBPASS';
 GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'%' IDENTIFIED BY '$GLANCE_DBPASS';
 FLUSH PRIVILEGES;
 EOF
 
-echocolor " Create user, endpoint for GLANCE"
+echocolor "Create user, endpoint for GLANCE"
 sleep 3
 
 source admin-openrc
@@ -40,17 +41,13 @@ openstack endpoint create --region RegionOne \
     image admin http://$CTL_MGNT_IP:9292
 
 echocolor "Install GLANCE"
-sleep 5
 apt-get -y install glance
 
 echocolor "Configuring GLANCE API"
-sleep 5
 #/* Back-up file nova.conf
-
 test -f $glanceapi_ctl.orig || cp $glanceapi_ctl $glanceapi_ctl.orig
 
 # Configuring glance config file /etc/glance/glance-api.conf
-
 ## [database] section
 ops_edit $glanceapi_ctl database \
     connection  mysql+pymysql://glance:$GLANCE_DBPASS@$CTL_MGNT_IP/glance
@@ -118,7 +115,6 @@ sleep 5
 
 service glance-registry restart
 service glance-api restart
-sleep 3
 
 service glance-registry restart
 service glance-api restart
@@ -127,7 +123,6 @@ echocolor "Remove glance.sqlite "
 rm -f /var/lib/glance/glance.sqlite
 
 echocolor "Registering Cirros IMAGE for GLANCE"
-sleep 3
 
 mkdir images
 cd images /
@@ -142,5 +137,4 @@ rm -f cirros-*-x86_64-disk.img
 
 cd /root/
 echocolor "Testing Glance"
-sleep 5
 openstack image list

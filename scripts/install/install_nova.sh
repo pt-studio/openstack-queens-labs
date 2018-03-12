@@ -13,9 +13,10 @@ source admin-openrc
 nova_ctl=/etc/nova/nova.conf
 
 if [ "$1" == "controller" ]; then
-		
 	echocolor "Create DB for NOVA"
 	cat << EOF | mysql -uroot -p$MYSQL_PASS
+DROP DATABASE IF EXISTS nova_api;
+DROP DATABASE IF EXISTS nova;
 CREATE DATABASE nova_api;
 CREATE DATABASE nova;
 GRANT ALL PRIVILEGES ON nova_api.* TO 'nova'@'localhost' IDENTIFIED BY '$NOVA_API_DBPASS';
@@ -24,12 +25,10 @@ GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'localhost' IDENTIFIED BY '$NOVA_DBPASS
 GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%' IDENTIFIED BY '$NOVA_DBPASS';
 FLUSH PRIVILEGES;
 EOF
-else
-	echocolor "Khong phai node Controller, khong can cai DB"
+
 fi
 
 if [ "$1" == "controller" ]; then
-
 	echocolor "Create user, endpoint for NOVA"
 
 	openstack user create nova --domain default  --password $NOVA_PASS
@@ -42,17 +41,15 @@ if [ "$1" == "controller" ]; then
 		compute internal http://$CTL_MGNT_IP:8774/v2.1/%\(tenant_id\)s
 	openstack endpoint create --region RegionOne \
 		   compute admin http://$CTL_MGNT_IP:8774/v2.1/%\(tenant_id\)s
-else
-	echocolor "Khong phai node Controller, khong can tao endpoint"
+
 fi
 
-
-
+echocolor "Install and configure components"
 if [ "$1" == "controller" ]; then
 	echocolor "Install NOVA in $CTL_MGNT_IP"
 	sleep 3
-	apt-get -y install nova-api nova-cert nova-conductor nova-consoleauth \
-	    	nova-novncproxy nova-scheduler
+	apt-get -y install nova-api nova-conductor nova-consoleauth \
+		nova-novncproxy nova-scheduler nova-placement-api
 
 elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ] ; then
 	echocolor "Install NOVA in $1"
@@ -67,8 +64,6 @@ fi
 test -f $nova_ctl.orig || cp $nova_ctl $nova_ctl.orig
 
 echocolor "Config file nova.conf"
-sleep 3
-
 ## [DEFAULT] section
 ops_del $nova_ctl DEFAULT logdir
 ops_del $nova_ctl DEFAULT verbose

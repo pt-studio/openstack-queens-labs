@@ -1,5 +1,5 @@
 #!/bin/bash
-## Install Keystone
+## Install Keystone | Identity service
 
 ###############################################################################
 ## Khai bao cac chuong trinh ho tro
@@ -24,6 +24,7 @@ apt-get install -y keystone apache2 libapache2-mod-wsgi
 echocolor "Configure keystone"
 
 path_keystone=/etc/keystone/keystone.conf
+test -f $path_keystone.orig || cp $path_keystone $path_keystone.orig
 
 # In the [database] section, configure database access
 ops_edit $path_keystone database connection mysql+pymysql://keystone:$KEYSTONE_DBPASS@$CTL_MGNT_IP/keystone
@@ -45,6 +46,8 @@ keystone-manage bootstrap --bootstrap-password $ADMIN_PASS \
   
 echocolor "Configure the Apache HTTP server"
 cat /etc/apache2/apache2.conf | grep ServerName || echo "ServerName $CTL_MGNT_IP" >>  /etc/apache2/apache2.conf
+sed -i 's/ServerName .*/ServerName '$CTL_MGNT_IP'/g' /etc/apache2/apache2.conf
+cat /etc/apache2/apache2.conf | grep ServerName
 
 systemctl restart apache2
 rm -f /var/lib/keystone/keystone.db
@@ -70,8 +73,7 @@ openstack project create --domain default \
   --description "Demo Project" demo
 
 # Create the demo user
-openstack user create --domain default \
-  --password-prompt $ADMIN_PASS
+openstack user create --domain default --password $ADMIN_PASS demo
 # Create the user role
 openstack role create user
 # Add the user role to the demo project and user
@@ -79,13 +81,13 @@ openstack role add --project demo --user demo user
 
 unset OS_AUTH_URL OS_PASSWORD
 
-openstack --os-auth-url http://$CTL_MGNT_IP:5000/v3 \
-  --os-project-domain-name Default --os-user-domain-name Default \
-  --os-project-name admin --os-username admin token issue
+#openstack --os-auth-url http://$CTL_MGNT_IP:5000/v3 \
+#  --os-project-domain-name Default --os-user-domain-name Default \
+#  --os-project-name admin --os-username admin token issue
 
-openstack --os-auth-url http://$CTL_MGNT_IP:5000/v3 \
-  --os-project-domain-name Default --os-user-domain-name Default \
-  --os-project-name demo --os-username demo token issue
+#openstack --os-auth-url http://$CTL_MGNT_IP:5000/v3 \
+#  --os-project-domain-name Default --os-user-domain-name Default \
+#  --os-project-name demo --os-username demo token issue
 
 # Create environment file
 cat << EOF > admin-openrc
