@@ -11,6 +11,7 @@ source admin-openrc
 
 ##  Init config path
 nova_ctl=/etc/nova/nova.conf
+novacom_ctl=/etc/nova/nova-compute.conf
 
 if [ "$1" == "controller" ]; then
     echocolor "Create DB for NOVA"
@@ -18,9 +19,11 @@ if [ "$1" == "controller" ]; then
 DROP DATABASE IF EXISTS nova_api;
 DROP DATABASE IF EXISTS nova;
 DROP DATABASE IF EXISTS nova_cell0;
+
 CREATE DATABASE nova_api;
 CREATE DATABASE nova;
 CREATE DATABASE nova_cell0;
+
 GRANT ALL PRIVILEGES ON nova_api.* TO 'nova'@'localhost' IDENTIFIED BY '$NOVA_API_DBPASS';
 GRANT ALL PRIVILEGES ON nova_api.* TO 'nova'@'%' IDENTIFIED BY '$NOVA_API_DBPASS';
 GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'localhost' IDENTIFIED BY '$NOVA_DBPASS';
@@ -66,22 +69,21 @@ elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ] ; then
     echocolor "Install NOVA in $1"
      apt-get -y install nova-compute
 
-else 
-     echocolor "Khong phai node COMPUTE"
 fi
 
-######## Backup configurations for NOVA ##########"
 test -f $nova_ctl.orig || cp $nova_ctl $nova_ctl.orig
 
-echocolor "Config file nova.conf"
+echocolor "Modify nova.conf"
 ## [DEFAULT] section
+# Work a round bug: https://bugs.launchpad.net/ubuntu/+source/nova/+bug/1506667
 ops_del $nova_ctl DEFAULT logdir
 ops_del $nova_ctl DEFAULT verbose
-ops_edit $nova_ctl DEFAULT log-dir /var/log/nova
-ops_edit $nova_ctl DEFAULT enabled_apis osapi_compute,metadata
-ops_edit $nova_ctl DEFAULT rpc_backend rabbit
+
+# ops_edit $nova_ctl DEFAULT log-dir /var/log/nova
+# ops_edit $nova_ctl DEFAULT enabled_apis osapi_compute,metadata
+# ops_edit $nova_ctl DEFAULT rpc_backend rabbit
 ops_edit $nova_ctl DEFAULT auth_strategy keystone
-ops_edit $nova_ctl DEFAULT rootwrap_config /etc/nova/rootwrap.conf
+# ops_edit $nova_ctl DEFAULT rootwrap_config /etc/nova/rootwrap.conf
 
 echocolor "Configure database access"
 if [ "$1" == "controller" ]; then
@@ -91,7 +93,9 @@ if [ "$1" == "controller" ]; then
         connection mysql+pymysql://nova:$NOVA_DBPASS@$CTL_MGNT_IP/nova
 
 else
-    echocolor "Khong phai node Controller"
+    # Determine whether your compute node supports hardware acceleration for virtual machines
+    # If this command returns a value of zero, your compute node does not support hardware acceleration and you must configure libvirt to use QEMU instead of KVM.
+    egrep -c '(vmx|svm)' /proc/cpuinfo | grep 0 && ops_edit $novacom_ctl libvirt virt_type qemu
 fi
 
 echocolor "Configure message queue access"
@@ -133,8 +137,6 @@ elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ] ; then
     ops_edit $nova_ctl vnc vncserver_listen 0.0.0.0
     ops_edit $nova_ctl vnc vncserver_proxyclient_address \$my_ip
     ops_edit $nova_ctl vnc novncproxy_base_url http://$CTL_MGNT_IP:6080/vnc_auto.html
-else
-    echo "Khong can cai VNC"
 fi
 
 ## In the [glance] section, configure the location of the Image service API
@@ -177,6 +179,4 @@ elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ]; then
     echocolor "Restarting NOVA on $1"
     service nova-compute restart
 
-else
-    echocolor "Khong phai NOVA - CTL"
 fi

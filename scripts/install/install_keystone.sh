@@ -37,9 +37,8 @@ keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
 keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
 
 echocolor "Bootstrap the Identity service"
-nc -nz $CTL_MGNT_IP 5000
 keystone-manage bootstrap --bootstrap-password $ADMIN_PASS \
-  --bootstrap-admin-url http://$CTL_MGNT_IP:5000/v3/ \
+  --bootstrap-admin-url http://$CTL_MGNT_IP:35357/v3/ \
   --bootstrap-internal-url http://$CTL_MGNT_IP:5000/v3/ \
   --bootstrap-public-url http://$CTL_MGNT_IP:5000/v3/ \
   --bootstrap-region-id RegionOne

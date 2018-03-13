@@ -20,6 +20,11 @@ lbfile=/etc/neutron/plugins/ml2/linuxbridge_agent.ini
 netdhcp=/etc/neutron/dhcp_agent.ini
 netl3agent=/etc/neutron/l3_agent.ini
 
+sysctl -w net.bridge.bridge-nf-call-iptables=1
+sysctl -w net.bridge.bridge-nf-call-ip6tables=1
+cat /etc/sysctl.conf | grep bridge-nf-call-iptables || echo 'net.bridge.bridge-nf-call-iptables=1' >> /etc/sysctl.conf
+cat /etc/sysctl.conf | grep bridge-nf-call-ip6tables || echo 'net.bridge.bridge-nf-call-ip6tables=1' >> /etc/sysctl.conf
+
 if [ "$1" == "controller" ]; then
     echocolor "Create DB for NEUTRON on $1 "
     cat << EOF | mysql -uroot -p$MYSQL_PASS
@@ -104,11 +109,6 @@ EOF
     ops_edit $lbfile securitygroup enable_security_group true
     ops_edit $lbfile securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
 
-    sysctl -w net.bridge.bridge-nf-call-iptables=1
-    sysctl -w net.bridge.bridge-nf-call-ip6tables=1
-    cat /etc/sysctl.conf | grep bridge-nf-call-iptables || echo 'net.bridge.bridge-nf-call-iptables=1' >> /etc/sysctl.conf
-    cat /etc/sysctl.conf | grep bridge-nf-call-ip6tables || echo 'net.bridge.bridge-nf-call-ip6tables=1' >> /etc/sysctl.conf
-
     echocolor "Configure the layer-3 agent"
     ops_edit $netl3agent DEFAULT interface_driver linuxbridge
 
@@ -145,8 +145,47 @@ EOF
     service neutron-metadata-agent restart
     service neutron-l3-agent restart
 
-# elif [ "$1" == "compute1" ]; then
+elif [ "$1" == "compute1" ]; then
+    apt-get install -y neutron-linuxbridge-agent
+    test -f $neutron_com.orig || cp $neutron_com $neutron_com.orig
 
-# elif [ "$1" == "compute2" ]; then
-    
+    ops_edit $neutron_com DEFAULT transport_url rabbit://openstack:$RABBIT_PASS@$CTL_MGNT_IP
+    ops_edit $neutron_com DEFAULT auth_strategy keystone
+    ops_edit $neutron_com DEFAULT notify_nova_on_port_status_changes True
+    ops_edit $neutron_com DEFAULT notify_nova_on_port_data_changes True
+    ops_edit $neutron_com DEFAULT core_plugin ml2
+
+    # ## [database] section
+    ops_del $neutron_com database connection
+
+    ## [keystone_authtoken] section
+    ops_edit $neutron_com  keystone_authtoken auth_uri http://$CTL_MGNT_IP:5000
+    ops_edit $neutron_com  keystone_authtoken auth_url http://$CTL_MGNT_IP:35357
+    ops_edit $neutron_com  keystone_authtoken memcached_servers $CTL_MGNT_IP:11211
+    ops_edit $neutron_com  keystone_authtoken auth_type password
+    ops_edit $neutron_com  keystone_authtoken project_domain_name default
+    ops_edit $neutron_com  keystone_authtoken user_domain_name default
+    ops_edit $neutron_com  keystone_authtoken project_name service
+    ops_edit $neutron_com  keystone_authtoken username neutron
+    ops_edit $neutron_com  keystone_authtoken password $NEUTRON_PASS
+
+    echocolor "Configuring linuxbridge_agent"
+    test -f $lbfile.orig || cp $lbfile $lbfile.orig
+
+    # [linux_bridge] section
+    ops_edit $lbfile linux_bridge physical_interface_mappings provider:$EXT_INTERFACE
+
+    # [vxlan] section
+    ops_edit $lbfile vxlan enable_vxlan True
+    ops_edit $lbfile vxlan local_ip $COM1_DATA_IP
+    ops_edit $lbfile vxlan l2_population True
+
+    # [securitygroup] section
+    ops_edit $lbfile securitygroup enable_security_group True
+    ops_edit $lbfile securitygroup firewall_driver \
+        neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
+
+    echocolor "Restarting NEUTRON service"
+    service nova-compute restart
+    service neutron-linuxbridge-agent restart
 fi
