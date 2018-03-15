@@ -15,7 +15,7 @@ path_hosts=/etc/hosts
 ###############################################################################
 ## Dinh nghia cac ham
 
-function setup_ip_add {
+function setup_ip_addr {
     echocolor "Setup interfaces"
     test -f $path_interfaces.orig || cp $path_interfaces $path_interfaces.orig
 
@@ -41,7 +41,7 @@ iface $EXT_INTERFACE inet static
     address $CTL_EXT_IP
     netmask $NETMASK_ADD_EXT
     gateway $GATEWAY_IP_EXT
-    dns-nameservers 8.8.8.8 8.8.4.4
+    dns-nameservers $DNS_IP
 
 # DATA VM
 auto $DATA_INTERFACE
@@ -50,7 +50,18 @@ iface $DATA_INTERFACE inet static
     netmask $NETMASK_ADD_DATA
 EOF
 
-    elif [ "$1" == "compute1" ]; then
+    elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ]; then
+        if [ "$1" == "compute1" ]; then
+            COMPUTE_MGNT_IP=$COM1_MGNT_IP
+            COMPUTE_EXT_IP=$COM1_EXT_IP
+            COMPUTE_DATA_IP=$COM1_DATA_IP
+
+        elif [ "$1" == "compute2" ]; then
+            COMPUTE_MGNT_IP=$COM2_MGNT_IP
+            COMPUTE_EXT_IP=$COM2_EXT_IP
+            COMPUTE_DATA_IP=$COM2_DATA_IP
+        fi
+
         cat << EOF > /etc/network/interfaces
 
 # This file describes the network interfaces available on your system
@@ -64,115 +75,73 @@ iface lo inet loopback
 
 auto $MGNT_INTERFACE
 iface $MGNT_INTERFACE inet static
-    address $COM1_MGNT_IP
+    address $COMPUTE_MGNT_IP
     netmask $NETMASK_ADD_MGNT
 
 
 # The primary network interface
 auto $EXT_INTERFACE
 iface $EXT_INTERFACE inet static
-    address $COM1_EXT_IP
+    address $COMPUTE_EXT_IP
     netmask $NETMASK_ADD_EXT
     gateway $GATEWAY_IP_EXT
-    dns-nameservers 8.8.8.8 8.8.4.4
+    dns-nameservers $DNS_IP
 
 auto $DATA_INTERFACE
 iface $DATA_INTERFACE inet static
-    address $COM1_DATA_IP
+    address $COMPUTE_DATA_IP
     netmask $NETMASK_ADD_DATA
 
 EOF
 
-    elif [ "$1" == "compute2" ]; then
-        cat << EOF > /etc/network/interfaces
-
-# This file describes the network interfaces available on your system
-# and how to activate them. For more information, see interfaces(5).
-
-source /etc/network/interfaces.d/*
-
-# The loopback network interface
-auto lo
-iface lo inet loopback
-
-auto $MGNT_INTERFACE
-iface $MGNT_INTERFACE inet static
-    address $COM2_MGNT_IP
-    netmask $NETMASK_ADD_MGNT
-
-
-# The primary network interface
-auto $EXT_INTERFACE
-iface $EXT_INTERFACE inet static
-    address $COM2_EXT_IP
-    netmask $NETMASK_ADD_EXT
-    gateway $GATEWAY_IP_EXT
-    dns-nameservers 8.8.8.8 8.8.4.4
-
-auto $DATA_INTERFACE
-iface $DATA_INTERFACE inet static
-    address $COM2_DATA_IP
-    netmask $NETMASK_ADD_DATA
-
-EOF
-
-    else
-        echocolor "Cau hinh network that bai"
-        exit 1
     fi
 }
 
 function setup_hostname {
     echocolor "Setup /etc/hostname"
-    sleep 3
-    
+
     if [ "$1" == "controller" ]; then
         echo "$HOST_CTL" > $path_hostname
-        hostname -F $path_hostname
     
     elif [ "$1" == "compute1" ]; then
         echo "$HOST_COM1" > $path_hostname
-        hostname -F $path_hostname
 
     elif [ "$1" == "compute2" ]; then
         echo "$HOST_COM2" > $path_hostname
-        hostname -F $path_hostname
-    else
-        echocolor "Cau hinh hostname that bai"
-        exit 1
     fi
+
+    hostname -F $path_hostname
 }
 
 function setup_hosts {
     echocolor "Setup /etc/hosts"
     test -f $path_hosts.orig || cp $path_hosts $path_hosts.orig
+
     if [ "$1" == "controller" ]; then
-        echo "127.0.0.1       localhost $HOST_CTL" > $path_hosts
-        echo "$CTL_MGNT_IP    $HOST_CTL" >> $path_hosts
-        echo "$COM1_MGNT_IP   $HOST_COM1" >> $path_hosts
-        echo "$COM2_MGNT_IP   $HOST_COM2" >> $path_hosts
-        echo "$CIN_MGNT_IP    $HOST_CIN" >> $path_hosts
-    
+        HOST_NAME=$HOST_CTL
     elif [ "$1" == "compute1" ]; then
-        echo "127.0.0.1       localhost $HOST_COM1" > $path_hosts
-        echo "$CTL_MGNT_IP    $HOST_CTL" >> $path_hosts
-        echo "$COM1_MGNT_IP   $HOST_COM1" >> $path_hosts
-        echo "$COM2_MGNT_IP   $HOST_COM2" >> $path_hosts
-        echo "$CIN_MGNT_IP    $HOST_CIN" >> $path_hosts
-
+        HOST_NAME=$HOST_COM1
     elif [ "$1" == "compute2" ]; then
-        echo "127.0.0.1       localhost $HOST_COM2" > $path_hosts
-        echo "$CTL_MGNT_IP    $HOST_CTL" >> $path_hosts
-        echo "$COM1_MGNT_IP   $HOST_COM1" >> $path_hosts
-        echo "$COM2_MGNT_IP   $HOST_COM2" >> $path_hosts
-        echo "$CIN_MGNT_IP    $HOST_CIN" >> $path_hosts
-
-    else
-        echocolor "setup hostname sai roi"
-        exit 1
-
+        HOST_NAME=$HOST_COM2
     fi
-    
+
+    cat << EOF > $path_hosts
+127.0.0.1       localhost $HOST_NAME
+
+# controller
+$CTL_MGNT_IP    $HOST_CTL
+
+# compute1
+$COM1_MGNT_IP   $HOST_COM1
+# compute2
+$COM2_MGNT_IP   $HOST_COM2
+
+# block1
+$CIN_MGNT_IP    $HOST_CIN
+
+# object1
+
+EOF
 }
 
 function add_openstack_repo {
@@ -199,12 +168,9 @@ if [ $# -ne 1 ]
 fi
 
 ### Goi ham thuc hiẹn
-setup_ip_add $1
+setup_ip_addr $1
 setup_hostname $1
 setup_hosts $1
 add_openstack_repo
 
-echocolor "Reboot Server"
-sleep 3
-init 6
-
+echocolor "Reboot Server to continue"
