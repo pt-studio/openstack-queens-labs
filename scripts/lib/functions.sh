@@ -1,8 +1,19 @@
 #!/bin/bash -ex
 
-# Ham dinh nghia mau cho cac ban tin in ra man hinh
+function print_install {
+    echo -e "\e[34m$1 \e[0m"
+}
+
+function print_header {
+    echo -e "\e[44m> $1 \e[0m"
+}
+
+function print_success {
+    echo -e "\e[42m$1 \e[0m"
+}
+
 function echocolor {
-    echo "$(tput setaf 3)##### $1 #####$(tput sgr0)"
+    echo -e "\e[93m$1 \e[0m"
 }
 
 

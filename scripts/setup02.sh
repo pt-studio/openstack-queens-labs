@@ -13,19 +13,19 @@ path_db_50server=/etc/mysql/mariadb.conf.d/50-server.cnf
 
 #############################################
 function install_crudini {
-    echocolor "Installing CRUDINI"
+    print_install "Installing CRUDINI"
     apt-get -y install crudini
 }
 
 #############################################
-function install_python_client {
-    echocolor "Install python client"
+function install_openstack_client {
+    print_install "Install openstack client"
     apt-get -y install python-openstackclient
 }
 
 #############################################
 function install_ntp {
-    echocolor "Install and config NTP"
+    print_install "Install and config NTP"
     apt-get -y install chrony
     test -f $path_chrony.orig || cp $path_chrony $path_chrony.orig
 
@@ -49,7 +49,7 @@ server $HOST_CTL iburst/g" $path_chrony
 ###############################################################################
 function install_database ()
 {
-    echocolor "Install and Config MariaDB"
+    print_install "Install and Config MariaDB"
     echo "deb http://sgp1.mirrors.digitalocean.com/mariadb/repo/10.2/ubuntu/ xenial main" > /etc/apt/sources.list.d/mariadb.list
     http_proxy=http://10.10.10.10:8080/ apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
     apt-get update
@@ -88,7 +88,7 @@ EOF
 
 ###############################################################################
 function install_rabbitmq {
-    echocolor "Install and Config RabbitMQ"
+    print_install "Install and Config RabbitMQ"
     apt-get -y install rabbitmq-server
 
     nc -nz 127.0.0.1 5672
@@ -101,7 +101,7 @@ function install_rabbitmq {
 
 ###############################################################################
 function install_memcache {
-    echocolor "Install and Config Memcache"
+    print_install "Install and Config Memcache"
 
     apt-get -y install memcached python-memcache
     sed -i "s/-l 127.0.0.1/-l $CTL_MGNT_IP/g" /etc/memcached.conf
@@ -184,7 +184,7 @@ fi
 
 if [ "$1" == "controller" ]; then 
     install_crudini
-    install_python_client
+    install_openstack_client
     install_ntp $1
     install_database
     install_rabbitmq
@@ -193,6 +193,6 @@ if [ "$1" == "controller" ]; then
 
 else 
     install_crudini
-    install_python_client
+    install_openstack_client
     install_ntp $1
 fi

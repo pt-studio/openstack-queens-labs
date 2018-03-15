@@ -2,7 +2,6 @@
 ## Install NOVA
 
 ###############################################################################
-## Init enviroiment source
 dir_path=$(dirname $0)
 source $dir_path/../config.cfg
 source $dir_path/../lib/functions.sh
@@ -59,21 +58,20 @@ if [ "$1" == "controller" ]; then
 
 fi
 
-echocolor "Install and configure components"
+print_header "Install and configure components"
 if [ "$1" == "controller" ]; then
-    echocolor "Install NOVA in $CTL_MGNT_IP"
+    print_install "Install NOVA in $CTL_MGNT_IP"
     apt-get -y install nova-api nova-conductor nova-consoleauth \
         nova-novncproxy nova-scheduler nova-placement-api
 
 elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ] ; then
-    echocolor "Install NOVA in $1"
+    print_install "Install NOVA in $1"
      apt-get -y install nova-compute
 
 fi
 
+print_header "Modify nova.conf"
 test -f $nova_ctl.orig || cp $nova_ctl $nova_ctl.orig
-
-echocolor "Modify nova.conf"
 ## [DEFAULT] section
 # Work a round bug: https://bugs.launchpad.net/ubuntu/+source/nova/+bug/1506667
 ops_del $nova_ctl DEFAULT logdir
@@ -95,6 +93,7 @@ if [ "$1" == "controller" ]; then
 else
     # Determine whether your compute node supports hardware acceleration for virtual machines
     # If this command returns a value of zero, your compute node does not support hardware acceleration and you must configure libvirt to use QEMU instead of KVM.
+    test -f $novacom_ctl.orig || cp $novacom_ctl $novacom_ctl.orig
     egrep -c '(vmx|svm)' /proc/cpuinfo | grep 0 && ops_edit $novacom_ctl libvirt virt_type qemu
 fi
 
@@ -102,6 +101,8 @@ echocolor "Configure message queue access"
 ops_edit $nova_ctl DEFAULT transport_url rabbit://openstack:$RABBIT_PASS@$CTL_MGNT_IP
 
 echocolor "Configure identity service access"
+ops_edit $nova_ctl api auth_strategy keystone
+
 ops_edit $nova_ctl keystone_authtoken auth_uri http://$CTL_MGNT_IP:5000
 ops_edit $nova_ctl keystone_authtoken auth_url http://$CTL_MGNT_IP:5000
 ops_edit $nova_ctl keystone_authtoken memcached_servers $CTL_MGNT_IP:11211
@@ -128,12 +129,12 @@ ops_edit $nova_ctl DEFAULT \
     firewall_driver nova.virt.firewall.NoopFirewallDriver
 
 echocolor "Configure the VNC proxy"
+ops_edit $nova_ctl vnc enabled true
 if [ "$1" == "controller" ]; then
     ops_edit $nova_ctl vnc vncserver_listen \$my_ip
     ops_edit $nova_ctl vnc vncserver_proxyclient_address \$my_ip
 
 elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ] ; then
-    ops_edit $nova_ctl vnc enabled  true
     ops_edit $nova_ctl vnc vncserver_listen 0.0.0.0
     ops_edit $nova_ctl vnc vncserver_proxyclient_address \$my_ip
     ops_edit $nova_ctl vnc novncproxy_base_url http://$CTL_MGNT_IP:6080/vnc_auto.html
@@ -156,8 +157,8 @@ ops_edit $nova_ctl placement username placement
 ops_edit $nova_ctl placement password $PLACEMENT_PASS
 
 if [ "$1" == "controller" ]; then 
-    echocolor "Remove Nova default db "
-    rm -f /var/lib/nova/nova.sqlite
+    #echocolor "Remove Nova default db "
+    #rm -f /var/lib/nova/nova.sqlite
 
     echocolor "Syncing Nova DB"
     su -s /bin/sh -c "nova-manage api_db sync" nova
@@ -176,7 +177,11 @@ if [ "$1" == "controller" ]; then
     service nova-conductor restart
     service nova-novncproxy restart
 
-    openstack extension list --network
+    # openstack extension list --network
+    # openstack compute service list
+    # openstack catalog list
+    # openstack image list
+    # nova-status upgrade check
 
 elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ]; then
     echocolor "Restarting NOVA on $1"

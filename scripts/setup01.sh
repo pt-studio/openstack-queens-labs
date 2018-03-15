@@ -16,7 +16,7 @@ path_hosts=/etc/hosts
 ## Dinh nghia cac ham
 
 function setup_ip_addr {
-    echocolor "Setup interfaces"
+    print_header "Setup interfaces"
     test -f $path_interfaces.orig || cp $path_interfaces $path_interfaces.orig
 
     if [ "$1" == "controller" ]; then
@@ -98,7 +98,7 @@ EOF
 }
 
 function setup_hostname {
-    echocolor "Setup /etc/hostname"
+    print_header "Setup /etc/hostname"
 
     if [ "$1" == "controller" ]; then
         echo "$HOST_CTL" > $path_hostname
@@ -114,7 +114,7 @@ function setup_hostname {
 }
 
 function setup_hosts {
-    echocolor "Setup /etc/hosts"
+    print_header "Setup /etc/hosts"
     test -f $path_hosts.orig || cp $path_hosts $path_hosts.orig
 
     if [ "$1" == "controller" ]; then
@@ -145,11 +145,11 @@ EOF
 }
 
 function add_openstack_repo {
-    echocolor "Enable the OpenStack Queens repository"
+    print_header "Enable the OpenStack Queens repository"
     apt-get install software-properties-common -y
     add-apt-repository cloud-archive:queens -y
 
-    echocolor "Upgrade the packages for server"
+    print_install "Upgrade the packages for server"
     apt-get -y update
     apt-get -y upgrade
     apt-get -y dist-upgrade
@@ -159,7 +159,7 @@ function add_openstack_repo {
 ### Running function
 ### Checking and help syntax command
 if [ $# -ne 1 ]; then
-    echocolor  "STEP 1: Setup Network"
+    print_header  "STEP 1: Setup Network"
     echo "Syntax command on"
     echo "    Controller: bash $0 controller"
     echo "    Compute1: bash $0 compute1"
@@ -167,10 +167,10 @@ if [ $# -ne 1 ]; then
     exit 1;
 fi
 
-### Goi ham thuc hiẹn
+### Pipeline
 setup_ip_addr $1
 setup_hostname $1
 setup_hosts $1
 add_openstack_repo
 
-echocolor "Reboot Server to continue"
+print_success "Reboot Server to continue"
