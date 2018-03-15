@@ -52,6 +52,7 @@ if [ "$1" == "controller" ]; then
     openstack user create --domain default --password $PLACEMENT_PASS placement
     openstack role add --project service --user placement admin
     openstack service create --name placement --description "Placement API" placement
+
     openstack endpoint create --region RegionOne placement public http://$CTL_MGNT_IP:8778
     openstack endpoint create --region RegionOne placement internal http://$CTL_MGNT_IP:8778
     openstack endpoint create --region RegionOne placement admin http://$CTL_MGNT_IP:8778
