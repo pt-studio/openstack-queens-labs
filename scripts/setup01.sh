@@ -158,13 +158,13 @@ function add_openstack_repo {
 ###############################################################################
 ### Running function
 ### Checking and help syntax command
-if [ $# -ne 1 ]
-    then
-        echocolor  "Syntax command "
-        echo "Syntax command on Controller: bash $0 controller"
-        echo "Syntax command on Compute1: bash $0 compute1"
-        echo "Syntax command on Compute2: bash $0 compute2"
-        exit 1;
+if [ $# -ne 1 ]; then
+    echocolor  "STEP 1: Setup Network"
+    echo "Syntax command on"
+    echo "    Controller: bash $0 controller"
+    echo "    Compute1: bash $0 compute1"
+    echo "    Compute2: bash $0 compute2"
+    exit 1;
 fi
 
 ### Goi ham thuc hiẹn

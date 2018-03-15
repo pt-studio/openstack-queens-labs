@@ -35,16 +35,10 @@ server 1.vn.pool.ntp.org iburst \
 server 0.asia.pool.ntp.org iburst \
 server 3.asia.pool.ntp.org iburst/g' $path_chrony
 
-    elif [ "$1" == "compute1" ]; then
+    elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ]; then
         sed -i "s/pool 2.debian.pool.ntp.org offline iburst/\
 server $HOST_CTL iburst/g" $path_chrony
 
-    elif [ "$1" == "compute2" ]; then
-        sed -i "s/pool 2.debian.pool.ntp.org offline iburst/\
-server $HOST_CTL iburst/g" $path_chrony
-
-    else
-        echocolor "Error installing NTP"
     fi
 
     service chrony restart
@@ -171,13 +165,21 @@ EOF
 
 ### Running function
 ### Checking and help syntax command
-if [ $# -ne 1 ]
-    then
-        echocolor  "Syntax command "
-        echo "Syntax command on Controller: bash $0 controller"
-        echo "Syntax command on Compute1: bash $0 compute1"
-        echo "Syntax command on Compute2: bash $0 compute2"
-        exit 1;
+if [ $# -ne 1 ]; then
+    echocolor  "STEP 2: Setup Environment"
+    echo "Setup steps:"
+    echo "    Install CrudIni"
+    echo "    Install OpenStack client"
+    echo "    Install NTP server"
+    echo "    Install MariaDB 10.2"
+    echo "    Install RabbitMQ"
+    echo "    Install Memcached"
+    echo "    Install Etcd"
+    echo "Syntax command on"
+    echo "    Controller: bash $0 controller"
+    echo "    Compute1: bash $0 compute1"
+    echo "    Compute2: bash $0 compute2"
+    exit 1;
 fi
 
 if [ "$1" == "controller" ]; then 
