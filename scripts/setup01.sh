@@ -1,6 +1,4 @@
 #!/bin/bash
-
-
 ###############################################################################
 ## Init environment source
 dir_path=$(dirname $0)
@@ -19,7 +17,6 @@ path_hosts=/etc/hosts
 
 function setup_ip_add {
     echocolor "Setup interfaces"
-    sleep 3
     test -f $path_interfaces.orig || cp $path_interfaces $path_interfaces.orig
 
     if [ "$1" == "controller" ]; then
@@ -187,7 +184,6 @@ function add_openstack_repo {
     apt-get -y update
     apt-get -y upgrade
     apt-get -y dist-upgrade
-    sleep 3
 }
 
 ###############################################################################

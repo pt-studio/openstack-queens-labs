@@ -38,17 +38,20 @@ keystone-manage credential_setup --keystone-user keystone --keystone-group keyst
 
 echocolor "Bootstrap the Identity service"
 keystone-manage bootstrap --bootstrap-password $ADMIN_PASS \
-  --bootstrap-admin-url http://$CTL_MGNT_IP:35357/v3/ \
+  --bootstrap-admin-url http://$CTL_MGNT_IP:5000/v3/ \
   --bootstrap-internal-url http://$CTL_MGNT_IP:5000/v3/ \
   --bootstrap-public-url http://$CTL_MGNT_IP:5000/v3/ \
   --bootstrap-region-id RegionOne
-  
+
 echocolor "Configure the Apache HTTP server"
 cat /etc/apache2/apache2.conf | grep ServerName || echo "ServerName $CTL_MGNT_IP" >>  /etc/apache2/apache2.conf
 sed -i 's/ServerName .*/ServerName '$CTL_MGNT_IP'/g' /etc/apache2/apache2.conf
 cat /etc/apache2/apache2.conf | grep ServerName
 
+systemctl start apache2
 systemctl restart apache2
+systemctl enable apache2
+
 rm -f /var/lib/keystone/keystone.db
 
 echocolor "Create a domain, projects, users, and roles"
@@ -81,12 +84,14 @@ openstack role add --project demo --user demo user
 unset OS_AUTH_URL OS_PASSWORD
 
 #openstack --os-auth-url http://$CTL_MGNT_IP:5000/v3 \
-#  --os-project-domain-name Default --os-user-domain-name Default \
+#  --os-project-domain-name default --os-user-domain-name Default \
 #  --os-project-name admin --os-username admin token issue
 
 #openstack --os-auth-url http://$CTL_MGNT_IP:5000/v3 \
-#  --os-project-domain-name Default --os-user-domain-name Default \
+#  --os-project-domain-name default --os-user-domain-name Default \
 #  --os-project-name demo --os-username demo token issue
+
+echocolor "Create OpenStack client environment scripts"
 
 # Create environment file
 cat << EOF > admin-openrc
@@ -99,16 +104,7 @@ export OS_AUTH_URL=http://$CTL_MGNT_IP:5000/v3
 export OS_IDENTITY_API_VERSION=3
 export OS_IMAGE_API_VERSION=2
 EOF
-
-echocolor "Verifying keystone"
-echocolor "Execute environment script"
 chmod +x admin-openrc
-
-cat admin-openrc >> /etc/profile
-cp admin-openrc /root/admin-openrc
-source admin-openrc
-openstack token issue
-
 
 cat << EOF > demo-openrc
 export OS_PROJECT_DOMAIN_NAME=Default
@@ -121,7 +117,8 @@ export OS_IDENTITY_API_VERSION=3
 export OS_IMAGE_API_VERSION=2
 EOF
 chmod +x demo-openrc
-cp demo-openrc /root/demo-openrc
 
+echocolor "Verifying keystone"
+
+source admin-openrc
 openstack token issue
-

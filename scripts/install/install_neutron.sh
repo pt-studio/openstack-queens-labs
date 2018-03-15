@@ -20,6 +20,7 @@ lbfile=/etc/neutron/plugins/ml2/linuxbridge_agent.ini
 netdhcp=/etc/neutron/dhcp_agent.ini
 netl3agent=/etc/neutron/l3_agent.ini
 
+modprobe br_netfilter
 sysctl -w net.bridge.bridge-nf-call-iptables=1
 sysctl -w net.bridge.bridge-nf-call-ip6tables=1
 cat /etc/sysctl.conf | grep bridge-nf-call-iptables || echo 'net.bridge.bridge-nf-call-iptables=1' >> /etc/sysctl.conf
@@ -27,9 +28,11 @@ cat /etc/sysctl.conf | grep bridge-nf-call-ip6tables || echo 'net.bridge.bridge-
 
 if [ "$1" == "controller" ]; then
     echocolor "Create DB for NEUTRON on $1 "
+
     cat << EOF | mysql -uroot -p$MYSQL_PASS
 DROP DATABASE IF EXISTS neutron;
 CREATE DATABASE neutron;
+
 GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'localhost' IDENTIFIED BY '$NEUTRON_DBPASS';
 GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'%' IDENTIFIED BY '$NEUTRON_DBPASS';
 FLUSH PRIVILEGES;
@@ -61,7 +64,7 @@ EOF
     test -f $neutron_ctl.orig || cp $neutron_ctl $neutron_ctl.orig
 
     echocolor "Configure the server component"
-    ops_edit $neutron_ctl database connection mysql+pymysql://neutron:$NEUTRON_DBPASS@controller/neutron
+    ops_edit $neutron_ctl database connection mysql+pymysql://neutron:$NEUTRON_DBPASS@$CTL_MGNT_IP/neutron
 
     ops_edit $neutron_ctl DEFAULT core_plugin ml2
     ops_edit $neutron_ctl DEFAULT service_plugins router
@@ -70,18 +73,19 @@ EOF
     ops_edit $neutron_ctl DEFAULT auth_strategy keystone
 
     ops_edit $neutron_ctl keystone_authtoken auth_uri http://$CTL_MGNT_IP:5000
-    ops_edit $neutron_ctl keystone_authtoken auth_url http://$CTL_MGNT_IP:35357
+    ops_edit $neutron_ctl keystone_authtoken auth_url http://$CTL_MGNT_IP:5000
     ops_edit $neutron_ctl keystone_authtoken memcached_servers $CTL_MGNT_IP:11211
     ops_edit $neutron_ctl keystone_authtoken auth_type password
     ops_edit $neutron_ctl keystone_authtoken project_domain_name default
     ops_edit $neutron_ctl keystone_authtoken user_domain_name default
-    ops_edit $neutron_ctl keystone_authtoken project_name neutron
+    ops_edit $neutron_ctl keystone_authtoken project_name service
+    ops_edit $neutron_ctl keystone_authtoken username neutron
     ops_edit $neutron_ctl keystone_authtoken password $NEUTRON_PASS
 
     ops_edit $neutron_ctl DEFAULT notify_nova_on_port_status_changes true
     ops_edit $neutron_ctl DEFAULT notify_nova_on_port_data_changes true
 
-    ops_edit $neutron_ctl nova auth_url http://$CTL_MGNT_IP:35357
+    ops_edit $neutron_ctl nova auth_url http://$CTL_MGNT_IP:5000
     ops_edit $neutron_ctl nova auth_type password
     ops_edit $neutron_ctl nova project_domain_name default
     ops_edit $neutron_ctl nova user_domain_name default
@@ -105,7 +109,11 @@ EOF
 
     echocolor "Configure the Linux bridge agent"
     ops_edit $lbfile linux_bridge physical_interface_mappings provider:$EXT_INTERFACE
-    ops_edit $lbfile vxlan enable_vxlan false
+
+    ops_edit $lbfile vxlan enable_vxlan true
+    ops_edit $lbfile vxlan local_ip $CTL_DATA_IP
+    ops_edit $lbfile vxlan l2_population true
+
     ops_edit $lbfile securitygroup enable_security_group true
     ops_edit $lbfile securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
 
@@ -123,8 +131,8 @@ EOF
     ops_edit $netmetadata DEFAULT metadata_proxy_shared_secret $METADATA_SECRET
 
     echocolor "Configure the Compute service to use the Networking service"
-    ops_edit $nova_ctl neutron url http://controller:9696
-    ops_edit $nova_ctl neutron auth_url http://controller:35357
+    ops_edit $nova_ctl neutron url http://$CTL_MGNT_IP:9696
+    ops_edit $nova_ctl neutron auth_url http://$CTL_MGNT_IP:5000
     ops_edit $nova_ctl neutron auth_type password
     ops_edit $nova_ctl neutron project_domain_name default
     ops_edit $nova_ctl neutron user_domain_name default
@@ -145,14 +153,14 @@ EOF
     service neutron-metadata-agent restart
     service neutron-l3-agent restart
 
-elif [ "$1" == "compute1" ]; then
+elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ]; then
     apt-get install -y neutron-linuxbridge-agent
     test -f $neutron_com.orig || cp $neutron_com $neutron_com.orig
 
     ops_edit $neutron_com DEFAULT transport_url rabbit://openstack:$RABBIT_PASS@$CTL_MGNT_IP
     ops_edit $neutron_com DEFAULT auth_strategy keystone
-    ops_edit $neutron_com DEFAULT notify_nova_on_port_status_changes True
-    ops_edit $neutron_com DEFAULT notify_nova_on_port_data_changes True
+    ops_edit $neutron_com DEFAULT notify_nova_on_port_status_changes true
+    ops_edit $neutron_com DEFAULT notify_nova_on_port_data_changes true
     ops_edit $neutron_com DEFAULT core_plugin ml2
 
     # ## [database] section
@@ -160,7 +168,7 @@ elif [ "$1" == "compute1" ]; then
 
     ## [keystone_authtoken] section
     ops_edit $neutron_com  keystone_authtoken auth_uri http://$CTL_MGNT_IP:5000
-    ops_edit $neutron_com  keystone_authtoken auth_url http://$CTL_MGNT_IP:35357
+    ops_edit $neutron_com  keystone_authtoken auth_url http://$CTL_MGNT_IP:5000
     ops_edit $neutron_com  keystone_authtoken memcached_servers $CTL_MGNT_IP:11211
     ops_edit $neutron_com  keystone_authtoken auth_type password
     ops_edit $neutron_com  keystone_authtoken project_domain_name default
@@ -176,12 +184,19 @@ elif [ "$1" == "compute1" ]; then
     ops_edit $lbfile linux_bridge physical_interface_mappings provider:$EXT_INTERFACE
 
     # [vxlan] section
-    ops_edit $lbfile vxlan enable_vxlan True
-    ops_edit $lbfile vxlan local_ip $COM1_DATA_IP
-    ops_edit $lbfile vxlan l2_population True
+    ops_edit $lbfile vxlan enable_vxlan true
+
+    if [ "$1" == "compute1" ]; then
+        ops_edit $lbfile vxlan local_ip $COM1_DATA_IP
+
+    elif [ "$1" == "compute2" ]; then
+        ops_edit $lbfile vxlan local_ip $COM2_DATA_IP
+    fi
+
+    ops_edit $lbfile vxlan l2_population true
 
     # [securitygroup] section
-    ops_edit $lbfile securitygroup enable_security_group True
+    ops_edit $lbfile securitygroup enable_security_group true
     ops_edit $lbfile securitygroup firewall_driver \
         neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
 

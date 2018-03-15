@@ -103,7 +103,7 @@ ops_edit $nova_ctl DEFAULT transport_url rabbit://openstack:$RABBIT_PASS@$CTL_MG
 
 echocolor "Configure identity service access"
 ops_edit $nova_ctl keystone_authtoken auth_uri http://$CTL_MGNT_IP:5000
-ops_edit $nova_ctl keystone_authtoken auth_url http://$CTL_MGNT_IP:35357
+ops_edit $nova_ctl keystone_authtoken auth_url http://$CTL_MGNT_IP:5000
 ops_edit $nova_ctl keystone_authtoken memcached_servers $CTL_MGNT_IP:11211
 ops_edit $nova_ctl keystone_authtoken auth_type password
 ops_edit $nova_ctl keystone_authtoken project_domain_name default
@@ -123,7 +123,7 @@ elif [ "$1" == "compute2" ]; then
     ops_edit $nova_ctl DEFAULT my_ip $COM2_MGNT_IP
 fi
 
-ops_edit $nova_ctl DEFAULT use_neutron True
+ops_edit $nova_ctl DEFAULT use_neutron true
 ops_edit $nova_ctl DEFAULT \
     firewall_driver nova.virt.firewall.NoopFirewallDriver
 
@@ -151,7 +151,7 @@ ops_edit $nova_ctl placement project_domain_name Default
 ops_edit $nova_ctl placement project_name service
 ops_edit $nova_ctl placement auth_type password
 ops_edit $nova_ctl placement user_domain_name Default
-ops_edit $nova_ctl placement auth_url http://$CTL_MGNT_IP:35357/v3
+ops_edit $nova_ctl placement auth_url http://$CTL_MGNT_IP:5000/v3
 ops_edit $nova_ctl placement username placement
 ops_edit $nova_ctl placement password $PLACEMENT_PASS
 
@@ -162,11 +162,12 @@ if [ "$1" == "controller" ]; then
     echocolor "Syncing Nova DB"
     su -s /bin/sh -c "nova-manage api_db sync" nova
     su -s /bin/sh -c "nova-manage cell_v2 map_cell0" nova
-    su -s /bin/sh -c "nova-manage cell_v2 create_cell --name=cell1 --verbose" nova 109e1d4b-536a-40d0-83c6-5f121b82b650
+    su -s /bin/sh -c "nova-manage cell_v2 create_cell --name=cell1 --verbose" nova
     su -s /bin/sh -c "nova-manage db sync" nova
 
     echocolor "Testing NOVA service"
-    #openstack compute service list
+    # service apache2 start
+    # openstack compute service list
     nova-manage cell_v2 list_cells
 
     service nova-api restart
@@ -175,8 +176,14 @@ if [ "$1" == "controller" ]; then
     service nova-conductor restart
     service nova-novncproxy restart
 
+    openstack extension list --network
+
 elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ]; then
     echocolor "Restarting NOVA on $1"
     service nova-compute restart
+
+    # Run the following commands on the controller node.
+    # echocolor "Add the compute node to the cell database"
+    # su -s /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose" nova
 
 fi

@@ -13,18 +13,17 @@ glanceapi_ctl=/etc/glance/glance-api.conf
 
 ###############################################################################
 echocolor "Create the database for GLANCE"
-sleep 3
 
 cat << EOF | mysql -uroot -p$MYSQL_PASS
 DROP DATABASE IF EXISTS glance;
 CREATE DATABASE glance;
+
 GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'localhost' IDENTIFIED BY '$GLANCE_DBPASS';
 GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'%' IDENTIFIED BY '$GLANCE_DBPASS';
 FLUSH PRIVILEGES;
 EOF
 
 echocolor "Create user, endpoint for GLANCE"
-sleep 3
 
 source admin-openrc
 
@@ -71,19 +70,18 @@ ops_edit $glanceapi_ctl keystone_authtoken password $GLANCE_PASS
 ops_edit $glanceapi_ctl paste_deploy flavor keystone
 
 ## [glance_store] section
-ops_edit $glanceapi_ctl glance_store default_store file
 ops_edit $glanceapi_ctl glance_store stores file,http
+ops_edit $glanceapi_ctl glance_store default_store file
 ops_edit $glanceapi_ctl glance_store \
     filesystem_store_datadir /var/lib/glance/images/
 
 #
-sleep 10
 echocolor "Configuring GLANCE REGISTER"
 #/* Backup file file glance-registry.conf
 test -f $glancereg_ctl.orig || cp $glancereg_ctl $glancereg_ctl.orig
 
 ## [DEFAULT] section
-ops_edit $glancereg_ctl DEFAULT  verbose True
+ops_edit $glancereg_ctl DEFAULT  verbose true
 
 ## [database] section
 ops_edit $glancereg_ctl database \
@@ -107,15 +105,10 @@ ops_edit $glancereg_ctl keystone_authtoken password $GLANCE_PASS
 ## [paste_deploy] section
 ops_edit $glancereg_ctl paste_deploy flavor keystone
 
-echocolor "Syncing DB for Glance"
-sleep 7
+echocolor "Populate the Image service database"
 su -s /bin/sh -c "glance-manage db_sync" glance
-echocolor "Restarting GLANCE service ..."
-sleep 5
 
-service glance-registry restart
-service glance-api restart
-
+echocolor "Restart the Image services"
 service glance-registry restart
 service glance-api restart
 
@@ -124,17 +117,14 @@ rm -f /var/lib/glance/glance.sqlite
 
 echocolor "Registering Cirros IMAGE for GLANCE"
 
-mkdir images
-cd images /
-wget http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
+http_proxy=http://10.10.10.10:8080 wget http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img
 
 openstack image create "cirros" \
-    --file cirros-0.3.4-x86_64-disk.img \
+    --file cirros-0.4.0-x86_64-disk.img \
     --disk-format qcow2 --container-format bare \
     --public
 
 rm -f cirros-*-x86_64-disk.img
 
-cd /root/
-echocolor "Testing Glance"
+echocolor "Verify operation"
 openstack image list

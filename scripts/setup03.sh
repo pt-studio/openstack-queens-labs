@@ -27,15 +27,15 @@ if [ "$1" == "controller" ]; then
     bash $dir_path/install/install_horizon.sh
 
 elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ]; then
-	# bash $dir_path/install/install_nova.sh $1
-	bash $dir_path/install/install_neutron.sh $1
+    bash $dir_path/install/install_nova.sh $1
+    bash $dir_path/install/install_neutron.sh $1
 
 else
-	echocolor "Error syntax"
+    echocolor "Error syntax"
     echocolor "Syntax command"
     echo "Syntax command on Controller: bash $0 controller"
     echo "Syntax command on Compute1: bash $0 compute1"
     echo "Syntax command on Compute2: bash $0 compute2"
-	exit 1;
+    exit 1;
 
 fi
