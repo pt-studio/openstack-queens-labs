@@ -32,14 +32,54 @@ Manual configure IP address for all node at `/etc/network/interfaces`
 Example config
 
 ```
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The management network
+auto eth0
+allow-hotplug eth0
+iface eth0 inet dhcp
+
+# The tenant / xvlan network
+auto eth1
+allow-hotplug eth1
+iface eth1 inet static
+    address 10.10.20.90
+    netmask 255.255.255.0
+
+# The provider / external network
+auto eth2
+allow-hotplug eth2
+iface eth2 inet dhcp
+
 ```
 
 ## Ubuntu 18.04
-Ubuntu 18.04 move `/etc/network/interfaces` to netplan. You need update IP config at `/etc/netplan/*.yaml` 
+Ubuntu 18.04 moved `/etc/network/interfaces` to netplan. You need update IP config at `/etc/netplan/*.yaml` 
 
-Example config
+Example config `/etc/netplan/01-netcfg.yaml`
 
 ```
+# This file describes the network interfaces available on your system
+# For more information, see netplan(5).
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    eth0:
+      dhcp4: yes
+    eth1:
+      addresses:
+        - 10.10.20.90/24
+    eth2:
+      dhcp4: yes
+
 ```
 
 # Step 2: Install OpenStack
