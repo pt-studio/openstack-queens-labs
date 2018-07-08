@@ -1,0 +1,94 @@
+#!/bin/bash
+
+###################################################################################################
+# Network interfaces
+## Management Network
+MGNT_INTERFACE=eth0
+## Provider Network
+EXT_INTERFACE=eth1
+## Tenant / xvlan Network
+DATA_INTERFACE=eth2
+
+## linuxbridge || openvswitch
+NEUTRON_AGENT=linuxbridge
+
+## Assigning IP for CONTROLLER node
+CTL_MGNT_IP=172.25.234.90
+CTL_EXT_IP=20.20.20.196
+CTL_DATA_IP=172.16.69.10
+
+## Assigning IP for COMPUTE1 node
+COM1_MGNT_IP=172.25.234.95
+COM1_EXT_IP=20.20.20.197
+COM1_DATA_IP=172.16.69.15
+
+## Assigning IP for COMPUTE2 node
+COM2_MGNT_IP=172.25.234.96
+COM2_EXT_IP=20.20.20.198
+COM2_DATA_IP=172.16.69.16
+
+## Assigning IP for CINDER node
+CIN_MGNT_IP=172.25.234.91
+CIN_EXT_IP=172.16.234.129
+
+## Gateway for EXT network
+GATEWAY_IP_EXT=172.16.234.254
+NETMASK_ADD_EXT=255.255.255.0
+
+## Gateway for MGNT network
+GATEWAY_IP_MGNT=192.168.81.1
+NETMASK_ADD_MGNT=255.255.255.0
+
+## Gateway for DATA network
+GATEWAY_IP_DATA=172.16.69.1
+NETMASK_ADD_DATA=255.255.255.0
+
+## DNS server
+DNS_IP="172.25.234.254"
+## NTP server
+NTP_SERVER="172.25.234.254"
+
+###################################################################################################
+# OpenStack settings
+## OpenStack API endpoint
+PUBLIC_FQDN_CTL=openstack.inet.d13ht01.tk
+MGNT_FQDN_CTL=openstack.inet.d13ht01.tk
+MGNT_FQDN_COM1=compute1.openstack.inet.d13ht01.tk
+MGNT_FQDN_COM2=compute2.openstack.inet.d13ht01.tk
+MGNT_FQDN_CIN1=block1.openstack.inet.d13ht01.tk
+
+
+## Current OpenStack Region
+REGION_NAME="VN_HCM_DC4"
+
+###################################################################################################
+# Credentials variable
+DEFAULT_PASS="wizardly_ride"
+
+## Admin credentials
+CREDENTIALS_ADMIN_USERNAME="admin"
+CREDENTIALS_ADMIN_PASSWORD="distracted_visvesvaraya"
+## Demo project credentials
+CREDENTIALS_DEMO_USERNAME="demo"
+CREDENTIALS_DEMO_PASSWORD="admiring_lichterman"
+
+## Internal services
+RABBIT_PASS="$DEFAULT_PASS"
+MYSQL_PASS="$DEFAULT_PASS"
+
+## OpenStack service credentials
+KEYSTONE_PASS="quirky_heyrovsky"
+GLANCE_PASS="quirky_heyrovsky"
+NOVA_PASS="quirky_heyrovsky"
+NEUTRON_PASS="quirky_heyrovsky"
+PLACEMENT_PASS="quirky_heyrovsky"
+METADATA_SECRET="quirky_heyrovsky"
+CINDER_PASS="quirky_heyrovsky"
+
+## OpenStack database credentials
+KEYSTONE_DBPASS="competent_bell"
+GLANCE_DBPASS="competent_bell"
+NOVA_DBPASS="competent_bell"
+NOVA_API_DBPASS="competent_bell"
+NEUTRON_DBPASS="competent_bell"
+CINDER_DBPASS="competent_bell"

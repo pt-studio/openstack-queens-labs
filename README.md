@@ -82,6 +82,8 @@ network:
 
 ```
 
+Then execute `sudo netplan apply`
+
 # Step 2: Install OpenStack
 - Download git & scripts
 
