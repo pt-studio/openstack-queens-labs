@@ -9,7 +9,6 @@ set -e
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 source $TOP_DIR/out/vars
 source $TOP_DIR/lib/functions.sh
-source $TOP_DIR/admin-openrc
 
 ### Running function
 ### Checking and help syntax command
@@ -37,6 +36,7 @@ if [ "$1" == "controller" ]; then
     install_horizon
 
 elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ]; then
+    source $TOP_DIR/admin-openrc
     source $TOP_DIR/install/03_nova.sh
     source $TOP_DIR/install/04_neutron.sh
 
