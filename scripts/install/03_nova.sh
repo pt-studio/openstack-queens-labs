@@ -99,6 +99,7 @@ EOF
     # configure the my_ip option to use the management interface IP address of the controller node
     if [ "$1" == "controller" ]; then
         ops_edit $nova_conf DEFAULT my_ip $CTL_MGNT_IP
+        ops_edit $nova_conf scheduler discover_hosts_in_cells_interval 300
 
     elif [ "$1" == "compute1" ]; then
         ops_edit $nova_conf DEFAULT my_ip $COM1_MGNT_IP

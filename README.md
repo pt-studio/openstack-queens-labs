@@ -120,6 +120,7 @@ source out/vars
 - SSH with `root` account and run scripts
 
 ```sh
+source out/vars
 ./setup01.sh
 ./setup02.sh computeI
 ./setup03.sh computeI
@@ -130,6 +131,7 @@ source out/vars
 - SSH with `root` account and run scripts
 
 ```sh
+source out/vars
 ./setup01.sh
 ./setup02.sh blockI
 ./setup03.sh blockI
