@@ -21,18 +21,22 @@ if [ $# -ne 1 ]; then
 fi
 
 if [ "$1" == "controller" ]; then
+    # Core service
     source $TOP_DIR/install/01_keystone.sh
     source $TOP_DIR/install/02_glance.sh
     source $TOP_DIR/install/03_nova.sh
     source $TOP_DIR/install/04_neutron.sh
-    source $TOP_DIR/install/05_horizon.sh
 
     install_keystone
     install_glance
     install_nova $1
     install_neutron $1
 
+    # Additional service
+    source $TOP_DIR/install/05_horizon.sh
     install_horizon
+    source $TOP_DIR/install/06_cinder.sh
+    install_cinder $1
 
 elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ]; then
     source $TOP_DIR/admin-openrc
@@ -42,4 +46,12 @@ elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ]; then
     install_nova $1
     install_neutron $1
 
+elif [ "$1" == "block1" ]; then
+    source $TOP_DIR/install/06_cinder.sh
+    install_cinder $1
+
+else
+    echo "Unknown node"
+    exit 1
 fi
+
