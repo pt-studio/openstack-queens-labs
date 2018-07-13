@@ -45,7 +45,7 @@ function install_ntp {
 
 function install_database ()
 {
-    local my_conf=/etc/mysql/mariadb.conf.d/99-openstack.cnf
+    local my_conf=/etc/mysql/conf.d/99-openstack.cnf
     print_install "Install and Config MariaDB"
     echo "deb http://sgp1.mirrors.digitalocean.com/mariadb/repo/10.2/ubuntu/ xenial main" > /etc/apt/sources.list.d/mariadb.list
     apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
