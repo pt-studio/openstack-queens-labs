@@ -153,7 +153,7 @@ source out/vars
 ## Login dashboad
 
 - Dashboard: `http://<controller mngt IP>/horizon` or `http://${PUBLIC_FQDN_CTL}/horizon`
-- User : `admin / distracted_visvesvaraya`
+- User : `admin / admin`
 
 ## Check by command or dashboard
 
