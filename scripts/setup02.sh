@@ -7,7 +7,6 @@ set -e
 ###############################################################################
 ## Init environment source
 TOP_DIR=$(cd $(dirname "$0") && pwd)
-source $TOP_DIR/out/vars
 source $TOP_DIR/lib/functions.sh
 source $TOP_DIR/lib/base.sh
 

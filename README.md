@@ -109,6 +109,7 @@ python util/generate_config.py
 - SSH with `root` account and run scripts
 
 ```sh
+source out/vars
 ./setup01.sh
 ./setup02.sh controller
 ./setup03.sh controller

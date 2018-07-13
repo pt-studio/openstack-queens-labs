@@ -85,9 +85,14 @@ METADATA_SECRET="{{passwd_service}}"
 CINDER_PASS="{{passwd_service}}"
 
 ## OpenStack database credentials
+#Database password of Identity service
 KEYSTONE_DBPASS="{{passwd_database}}"
+#Database password for Image service
 GLANCE_DBPASS="{{passwd_database}}"
+#Database password for Compute service
 NOVA_DBPASS="{{passwd_database}}"
 NOVA_API_DBPASS="{{passwd_database}}"
+#Database password for the Networking service
 NEUTRON_DBPASS="{{passwd_database}}"
+#Database password for the Block Storage service
 CINDER_DBPASS="{{passwd_database}}"
