@@ -22,11 +22,15 @@ function install_ntp {
 
         for addr in $(echo $NTP_SERVER | tr " " "\n")
         do
-            CHRONY_NTP_SERVER=${CHRONY_NTP_SERVER}'pool '${addr}' iburst \\\n'
+            CHRONY_NTP_SERVER=${CHRONY_NTP_SERVER}'server '${addr}' iburst \\\n'
         done
 
-        PATTERN=$(echo -e 's/pool ntp.ubuntu.com        iburst maxsources 4/'$CHRONY_NTP_SERVER'/g')
+        PATTERN=$(echo -e 's/__ntp_placeholder__/'$CHRONY_NTP_SERVER'/g')
+
+        sed -i "s/pool ntp.ubuntu.com        iburst maxsources 4/__ntp_placeholder__/" $path_chrony
+        sed -i '/ubuntu.pool.ntp.org iburst/d' $path_chrony
         sed -i "$PATTERN" $path_chrony
+        echo 'allow 172.25.234.0/24' >> $path_chrony
 
     elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ]; then
         sed -i "s/pool ntp.ubuntu.com        iburst maxsources 4/server $MGNT_FQDN_CTL iburst/g" $path_chrony
