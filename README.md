@@ -135,18 +135,22 @@ python util/generate_config.py
 ```
 
 # Step 3: Test operation
-## Create network, VM
-
-- On Controller node, run
-
+## Create demo VMs
 ```sh
-./create-vm.sh
+# Create Cirros images
+./test_glace.sh
+# Create base network
+./test_neutron.sh
+
+# Modify SECURITY_GROUP_ID match with current project
+./test_nova_provider_network.sh
+./test_nova_self_network.sh
 ```
 
 ## Login dashboad
 
-- Dashboard: `http://horizon-fqdn/horizon`
-- User : `admin/yourpassword`
+- Dashboard: `http://<controller mngt IP>/horizon` or `http://${PUBLIC_FQDN_CTL}/horizon`
+- User : `admin / distracted_visvesvaraya`
 
 ## Check by command or dashboard
 

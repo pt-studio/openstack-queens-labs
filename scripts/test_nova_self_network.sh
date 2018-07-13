@@ -11,7 +11,7 @@ source $TOP_DIR/admin-openrc
 echocolor "Spawn VM on selfservice network"
 
 PRIVATE_NET_ID=`openstack network list | egrep -w selfservice | awk '{print $2}'`
-SECURITY_GROUP_ID='389926eb-19ef-41e2-97c4-ddd18e3bafa6	'
+SECURITY_GROUP_ID='default'
 
 openstack server create \
     --flavor t2.nano \
