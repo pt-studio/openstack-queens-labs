@@ -1,4 +1,4 @@
-# OpenStack Queens LAB
+# OpenStack Queens | Mini LAB
 
 A small script used for deploy OpenStack Queens
 

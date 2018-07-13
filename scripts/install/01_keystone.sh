@@ -40,8 +40,8 @@ EOF
     --bootstrap-region-id ${REGION_NAME}
 
   print_header "Configure the Apache HTTP server"
-  cat /etc/apache2/apache2.conf | grep ServerName || echo "ServerName $MGNT_FQDN_CTL" >>  /etc/apache2/apache2.conf
-  sed -i 's/ServerName .*/ServerName '$MGNT_FQDN_CTL'/g' /etc/apache2/apache2.conf
+  cat /etc/apache2/apache2.conf | grep ServerName || echo "ServerName $PUBLIC_FQDN_CTL" >>  /etc/apache2/apache2.conf
+  sed -i 's/ServerName .*/ServerName '$PUBLIC_FQDN_CTL'/g' /etc/apache2/apache2.conf
 
   systemctl start apache2
   systemctl restart apache2
