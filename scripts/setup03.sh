@@ -33,10 +33,10 @@ if [ "$1" == "controller" ]; then
     install_neutron $1
 
     # Additional service
-    source $TOP_DIR/install/05_horizon.sh
-    install_horizon
     source $TOP_DIR/install/06_cinder.sh
     install_cinder $1
+    source $TOP_DIR/install/05_horizon.sh
+    install_horizon
 
 elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ]; then
     source $TOP_DIR/admin-openrc
