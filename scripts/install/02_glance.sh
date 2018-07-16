@@ -39,6 +39,7 @@ EOF
     backup_config $glancereg_ctl
 
     rm -rf /var/lib/glance/*
+    rm -rf /var/log/glance/*
 
     print_header "Configuring GLANCE API"
     # Configuring glance config file /etc/glance/glance-api.conf
@@ -46,7 +47,7 @@ EOF
     ops_edit $glanceapi_ctl database connection mysql+pymysql://glance:$GLANCE_DBPASS@$MGNT_FQDN_CTL/glance
 
     ## [keystone_authtoken] section
-    ops_edit $glanceapi_ctl keystone_authtoken auth_uri http://$MGNT_FQDN_CTL:5000
+    ops_edit $glanceapi_ctl keystone_authtoken www_authenticate_uri http://$MGNT_FQDN_CTL:5000
     ops_edit $glanceapi_ctl keystone_authtoken auth_url http://$MGNT_FQDN_CTL:5000
     ops_edit $glanceapi_ctl keystone_authtoken memcached_servers $MGNT_FQDN_CTL:11211
     ops_edit $glanceapi_ctl keystone_authtoken auth_type password
@@ -75,7 +76,7 @@ EOF
     #ops_del $glancereg_ctl database sqlite_db
 
     ## [keystone_authtoken] section
-    ops_edit $glancereg_ctl keystone_authtoken auth_uri http://$MGNT_FQDN_CTL:5000
+    ops_edit $glancereg_ctl keystone_authtoken www_authenticate_uri http://$MGNT_FQDN_CTL:5000
     ops_edit $glancereg_ctl keystone_authtoken auth_url http://$MGNT_FQDN_CTL:5000
     ops_edit $glancereg_ctl keystone_authtoken memcached_servers $MGNT_FQDN_CTL:11211
     ops_edit $glancereg_ctl keystone_authtoken auth_type password

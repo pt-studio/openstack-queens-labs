@@ -68,6 +68,8 @@ EOF
 
     fi
 
+    rm -rf /var/log/nova/*
+
     print_header "Modify nova.conf"
 
     echocolor "Configure database access"
@@ -78,7 +80,8 @@ EOF
     elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ] ; then
         # Determine whether your compute node supports hardware acceleration for virtual machines
         # If this command returns a value of zero, your compute node does not support hardware acceleration and you must configure libvirt to use QEMU instead of KVM.
-        egrep -c '(vmx|svm)' /proc/cpuinfo | grep 0 && ops_edit $novacom_conf libvirt virt_type qemu
+        # egrep -c '(vmx|svm)' /proc/cpuinfo | grep 0 && ops_edit $novacom_conf libvirt virt_type qemu
+        ops_edit $novacom_conf libvirt virt_type qemu
     fi
 
     echocolor "Configure message queue access"
@@ -114,12 +117,12 @@ EOF
     echocolor "Configure the VNC proxy"
     ops_edit $nova_conf vnc enabled true
     if [ "$1" == "controller" ]; then
-        ops_edit $nova_conf vnc vncserver_listen \$my_ip
-        ops_edit $nova_conf vnc vncserver_proxyclient_address \$my_ip
+        ops_edit $nova_conf vnc server_listen \$my_ip
+        ops_edit $nova_conf vnc server_proxyclient_address \$my_ip
 
     elif [ "$1" == "compute1" ] || [ "$1" == "compute2" ] ; then
-        ops_edit $nova_conf vnc vncserver_listen 0.0.0.0
-        ops_edit $nova_conf vnc vncserver_proxyclient_address \$my_ip
+        ops_edit $nova_conf vnc server_listen 0.0.0.0
+        ops_edit $nova_conf vnc server_proxyclient_address \$my_ip
         ops_edit $nova_conf vnc novncproxy_base_url http://$PUBLIC_FQDN_CTL:6080/vnc_auto.html
     fi
 
@@ -130,7 +133,7 @@ EOF
     ops_edit $nova_conf oslo_concurrency lock_path /var/lib/nova/tmp
 
     ## In the [placement] section, configure the Placement API
-    ops_edit $nova_conf placement region-name ${REGION_NAME}
+    ops_edit $nova_conf placement region_name ${REGION_NAME}
     ops_edit $nova_conf placement project_domain_name default
     ops_edit $nova_conf placement project_name service
     ops_edit $nova_conf placement auth_type password
@@ -140,9 +143,6 @@ EOF
     ops_edit $nova_conf placement password $PLACEMENT_PASS
 
     if [ "$1" == "controller" ]; then 
-        #echocolor "Remove Nova default db "
-        #rm -f /var/lib/nova/nova.sqlite
-
         echocolor "Syncing Nova DB"
         su -s /bin/sh -c "nova-manage api_db sync" nova
         su -s /bin/sh -c "nova-manage cell_v2 map_cell0" nova

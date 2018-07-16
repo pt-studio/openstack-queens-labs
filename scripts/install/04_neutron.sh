@@ -15,18 +15,17 @@ EOF
 
 
 function enable_net_forward() {
-    echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
-    echo "net.ipv4.conf.all.rp_filter=0" >> /etc/sysctl.conf
-    echo "net.ipv4.conf.default.rp_filter=0" >> /etc/sysctl.conf
+    sed -i 's/net.ipv4.ip_forward=.*/net.ipv4.ip_forward=1/' /etc/sysctl.conf
+    #echo "net.ipv4.conf.all.rp_filter=0" >> /etc/sysctl.conf
+    #echo "net.ipv4.conf.default.rp_filter=0" >> /etc/sysctl.conf
+    sysctl -p
 }
 
 function enable_net_bridge() {
     modprobe br_netfilter
-    sysctl -w net.bridge.bridge-nf-call-iptables=1
-    sysctl -w net.bridge.bridge-nf-call-ip6tables=1
     cat /etc/sysctl.conf | grep bridge-nf-call-iptables || echo 'net.bridge.bridge-nf-call-iptables=1' >> /etc/sysctl.conf
     cat /etc/sysctl.conf | grep bridge-nf-call-ip6tables || echo 'net.bridge.bridge-nf-call-ip6tables=1' >> /etc/sysctl.conf
-
+    sysctl -p
 }
 
 function install_neutron() {
@@ -41,9 +40,12 @@ function install_neutron() {
     local netdhcp=/etc/neutron/dhcp_agent.ini
     local netl3agent=/etc/neutron/l3_agent.ini
 
+    enable_net_forward
     enable_net_bridge
 
     if [ "$1" == "controller" ]; then
+        rm -rf /var/log/neutron/*
+
         echocolor "Create DB for NEUTRON on $1 "
 
         init_nova_database
@@ -86,7 +88,7 @@ function install_neutron() {
         ops_edit $neutron_ctl DEFAULT transport_url rabbit://openstack:$RABBIT_PASS@$MGNT_FQDN_CTL
         ops_edit $neutron_ctl DEFAULT auth_strategy keystone
 
-        ops_edit $neutron_ctl keystone_authtoken auth_uri http://$MGNT_FQDN_CTL:5000
+        ops_edit $neutron_ctl keystone_authtoken www_authenticate_uri http://$MGNT_FQDN_CTL:5000
         ops_edit $neutron_ctl keystone_authtoken auth_url http://$MGNT_FQDN_CTL:5000
         ops_edit $neutron_ctl keystone_authtoken memcached_servers $MGNT_FQDN_CTL:11211
         ops_edit $neutron_ctl keystone_authtoken auth_type password
@@ -179,7 +181,7 @@ function install_neutron() {
         ops_edit $neutron_com database connection mysql+pymysql://neutron:$NEUTRON_DBPASS@$MGNT_FQDN_CTL/neutron
 
         ## [keystone_authtoken] section
-        ops_edit $neutron_com keystone_authtoken auth_uri http://$MGNT_FQDN_CTL:5000
+        ops_edit $neutron_com keystone_authtoken www_authenticate_uri http://$MGNT_FQDN_CTL:5000
         ops_edit $neutron_com keystone_authtoken auth_url http://$MGNT_FQDN_CTL:5000
         ops_edit $neutron_com keystone_authtoken memcached_servers $MGNT_FQDN_CTL:11211
         ops_edit $neutron_com keystone_authtoken auth_type password
@@ -223,5 +225,6 @@ function install_neutron() {
         print_header "Restarting NEUTRON service"
         service nova-compute restart
         service neutron-linuxbridge-agent restart
+        service neutron-linuxbridge-cleanup restart
     fi
 }

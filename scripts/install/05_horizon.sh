@@ -7,6 +7,7 @@ function install_horizon() {
 
     echocolor "Installing Dashboard package"
     apt-get -y install openstack-dashboard
+    rm -rf /var/log/apache2/*
 
     backup_config $localcnf
     backup_config $filehtml

@@ -43,6 +43,7 @@ EOF
     print_install "Install CINDER"
     apt install -y cinder-api cinder-scheduler
     backup_config $cinder_conf
+    rm -rf /var/log/cinder/*
 
     print_header "Configuring CINDER"
     # Configuring glance config file /etc/cinder/cinder.conf
@@ -56,7 +57,7 @@ EOF
     echocolor "Configure identity service access"
     ops_edit $cinder_conf DEFAULT auth_strategy keystone
 
-    ops_edit $cinder_conf keystone_authtoken auth_uri http://$MGNT_FQDN_CTL:5000
+    ops_edit $cinder_conf keystone_authtoken www_authenticate_uri http://$MGNT_FQDN_CTL:5000
     ops_edit $cinder_conf keystone_authtoken auth_url http://$MGNT_FQDN_CTL:5000
     ops_edit $cinder_conf keystone_authtoken memcached_servers $MGNT_FQDN_CTL:11211
     ops_edit $cinder_conf keystone_authtoken auth_type password
@@ -112,7 +113,7 @@ function install_cinder_node() {
     echocolor "Configure identity service access"
     ops_edit $cinder_conf DEFAULT auth_strategy keystone
 
-    ops_edit $cinder_conf keystone_authtoken auth_uri http://$MGNT_FQDN_CTL:5000
+    ops_edit $cinder_conf keystone_authtoken www_authenticate_uri http://$MGNT_FQDN_CTL:5000
     ops_edit $cinder_conf keystone_authtoken auth_url http://$MGNT_FQDN_CTL:5000
     ops_edit $cinder_conf keystone_authtoken memcached_servers $MGNT_FQDN_CTL:11211
     ops_edit $cinder_conf keystone_authtoken auth_type password
@@ -127,8 +128,8 @@ function install_cinder_node() {
 
     ops_edit $cinder_conf lvm volume_driver cinder.volume.drivers.lvm.LVMVolumeDriver
     ops_edit $cinder_conf lvm volume_group cinder-volumes
-    ops_edit $cinder_conf lvm iscsi_protocol iscsi
-    ops_edit $cinder_conf lvm iscsi_helper tgtadm
+    ops_edit $cinder_conf lvm target_protocol iscsi
+    ops_edit $cinder_conf lvm target_helper tgtadm
 
     ops_edit $cinder_conf DEFAULT enabled_backends lvm
     ops_edit $cinder_conf DEFAULT glance_api_servers http://${MGNT_FQDN_CTL}:9292
