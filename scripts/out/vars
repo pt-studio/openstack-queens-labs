@@ -4,10 +4,10 @@
 # Network interfaces
 ## Management Network
 export MGNT_INTERFACE=eth0
-## Provider Network
-export EXT_INTERFACE=eth1
 ## Tenant / xvlan Network
-export DATA_INTERFACE=eth2
+export DATA_INTERFACE=eth1
+## Provider Network
+export EXT_INTERFACE=eth2
 
 ## linuxbridge || openvswitch
 export NEUTRON_AGENT=linuxbridge
