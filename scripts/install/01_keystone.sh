@@ -21,6 +21,7 @@ EOF
 
   path_keystone=/etc/keystone/keystone.conf
   backup_config $path_keystone
+  rm -rf /var/log/keystone/*
 
   # In the [database] section, configure database access
   ops_edit $path_keystone database connection mysql+pymysql://keystone:$KEYSTONE_DBPASS@$MGNT_FQDN_CTL/keystone
@@ -57,21 +58,12 @@ EOF
   export OS_AUTH_URL=http://$PUBLIC_FQDN_CTL:5000/v3
   export OS_IDENTITY_API_VERSION=3
 
-  openstack domain create --description "An Example Domain" example
-
   # Create the service project
   openstack project create --domain default \
     --description "Service Project" service
 
-  # Create the demo project
-  openstack project create --domain default \
-    --description "Demo Project" $CREDENTIALS_DEMO_USERNAME
-  # Create the demo user
-  openstack user create --domain default --password $CREDENTIALS_DEMO_PASSWORD $CREDENTIALS_DEMO_USERNAME
   # Create the user role
   openstack role create user
-  # Add the user role to the demo project and user
-  openstack role add --project $CREDENTIALS_DEMO_USERNAME --user $CREDENTIALS_DEMO_USERNAME user
 
   print_header "Verify operation"
 
@@ -92,17 +84,17 @@ export OS_IMAGE_API_VERSION=2
 EOF
   chmod +x admin-openrc
 
-  cat << EOF > ${CREDENTIALS_DEMO_USERNAME}-openrc
-export OS_PROJECT_DOMAIN_NAME=default
-export OS_USER_DOMAIN_NAME=default
-export OS_PROJECT_NAME=${CREDENTIALS_DEMO_USERNAME}
-export OS_USERNAME=${CREDENTIALS_DEMO_USERNAME}
-export OS_PASSWORD=${CREDENTIALS_DEMO_PASSWORD}
-export OS_AUTH_URL=http://$PUBLIC_FQDN_CTL:5000/v3
-export OS_IDENTITY_API_VERSION=3
-export OS_IMAGE_API_VERSION=2
-EOF
-  chmod +x ${CREDENTIALS_DEMO_USERNAME}-openrc
+#   cat << EOF > ${CREDENTIALS_DEMO_USERNAME}-openrc
+# export OS_PROJECT_DOMAIN_NAME=default
+# export OS_USER_DOMAIN_NAME=default
+# export OS_PROJECT_NAME=${CREDENTIALS_DEMO_USERNAME}
+# export OS_USERNAME=${CREDENTIALS_DEMO_USERNAME}
+# export OS_PASSWORD=${CREDENTIALS_DEMO_PASSWORD}
+# export OS_AUTH_URL=http://$PUBLIC_FQDN_CTL:5000/v3
+# export OS_IDENTITY_API_VERSION=3
+# export OS_IMAGE_API_VERSION=2
+# EOF
+#   chmod +x ${CREDENTIALS_DEMO_USERNAME}-openrc
 
   echocolor "Verifying keystone"
   source admin-openrc
