@@ -23,7 +23,7 @@ openstack flavor create --id 8 --vcpus 4 --ram 16384 --disk 8 m4.xlarge || true
 echocolor "Spawn VM on provider network"
 
 PROVIDER_NET_ID=`openstack network list | egrep -w provider | awk '{print $2}'`
-SECURITY_GROUP_ID='default'
+SECURITY_GROUP_ID=`openstack security group list --project ${OS_PROJECT_NAME} | grep Default | awk '{print $2}'`
 
 openstack server create \
     --flavor t2.nano \
