@@ -130,7 +130,7 @@ EOF
     ops_edit $nova_conf oslo_concurrency lock_path /var/lib/nova/tmp
 
     ## In the [placement] section, configure the Placement API
-    ops_edit $nova_conf placement os_region_name ${REGION_NAME}
+    ops_edit $nova_conf placement region-name ${REGION_NAME}
     ops_edit $nova_conf placement project_domain_name default
     ops_edit $nova_conf placement project_name service
     ops_edit $nova_conf placement auth_type password
